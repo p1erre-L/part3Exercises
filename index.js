@@ -35,12 +35,8 @@ app.get('/api/persons', (request, response) => {
 })
 
 const infoPeople = "Phonebook has info for " + persons.length.toString() + " people"
-// console.log(infoPeople)
-
 const infoTime = Date(Date.now());
-// console.log(infoTime)
 const info = "<p>" + infoPeople + "</p><p>" + infoTime + "</p>"
-console.log(info)
 
 app.get('/info', (request, response) => {
     response.send(info)
@@ -64,29 +60,41 @@ app.delete('/api/persons/:id', (request, response) => {
     response.status(204).end()
 })
 
-// const generateId = () => {
-//     const maxId = notes.length > 0 ? Math.max(...notes.map((n) => n.id)) : 0
-//     return maxId + 1
-// }
+const generateId = () => {
+    const maxId = persons.length > 0 ? Math.max(...persons.map((p) => p.id)) : 0
+    return maxId + 1
+}
 
-// app.post('/api/notes', (request, response) => {
-//     const body = request.body
+app.post('/api/persons', (request, response) => {
+    const body = request.body
 
-//     if (!body.content) {
-//         return response.status(400).json({
-//             error: 'content missing',
-//         })
-//     }
+    if (!body.name) {
+        return response.status(400).json({
+            error: 'name missing',
+        })
+    }
 
-//     const note = {
-//         content: body.content,
-//         important: Boolean(body.important) || false,
-//         id: generateId(),
-//     }
+    if (persons.some((person) => person.name === body.name)) {
+        return response.status(400).json({
+            error: 'name duplicate',
+        })
+    }
 
-//     note = notes.concat(note)
-//     response.json(note)
-// })
+    if (!body.number) {
+        return response.status(400).json({
+            error: 'number missing',
+        })
+    }
+
+    const person = {
+        id: generateId(),
+        name: body.name,
+        number: body.number,
+    }
+
+    persons = persons.concat(person)
+    response.json(person)
+})
 
 const PORT = 3001
 app.listen(PORT, () => {
