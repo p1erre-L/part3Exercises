@@ -46,23 +46,23 @@ app.get('/info', (request, response) => {
     response.send(info)
 })
 
-// app.get('/api/notes/:id', (request, response) => {
-//     const id = Number(request.params.id)
-//     const note = notes.find((note) => note.id === id)
+app.get('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    const person = persons.find((person) => person.id === id)
 
-//     if (note) {
-//         response.json(note)
-//     } else {
-//         response.status(404).end()
-//     }
-// })
+    if (person) {
+        response.json(person)
+    } else {
+        response.status(404).end()
+    }
+})
 
-// app.delete('/api/notes/:id', (request, response) => {
-//     const id = Number(request.params.id)
-//     notes = notes.filter((note) => note.id !== id)
+app.delete('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    persons = persons.filter((person) => person.id !== id)
 
-//     response.status(204).end()
-// })
+    response.status(204).end()
+})
 
 // const generateId = () => {
 //     const maxId = notes.length > 0 ? Math.max(...notes.map((n) => n.id)) : 0
