@@ -34,12 +34,15 @@ app.get('/api/persons', (request, response) => {
     response.json(persons)
 })
 
-const infoPeople = "Phonebook has info for " + persons.length.toString() + " people"
-const infoTime = Date(Date.now());
-const info = "<p>" + infoPeople + "</p><p>" + infoTime + "</p>"
+
+const generateInfo = () => {
+    const infoPeople = "Phonebook has info for " + persons.length.toString() + " people"
+    const infoTime = Date(Date.now());
+    return "<p>" + infoPeople + "</p><p>" + infoTime + "</p>"
+}
 
 app.get('/info', (request, response) => {
-    response.send(info)
+    response.send(generateInfo())
 })
 
 app.get('/api/persons/:id', (request, response) => {
