@@ -46,20 +46,32 @@ app.get('/api/persons', (request, response) => {
 })
 
 
-const generateInfo = () => {
+const generateInfo = (persons) => {
+    console.log("persons in generateinfo :", persons)
     const infoPeople = "Phonebook has info for " + persons.length.toString() + " people"
     const infoTime = Date(Date.now());
     return "<p>" + infoPeople + "</p><p>" + infoTime + "</p>"
 }
 
-app.get('/info', (request, response) => {
-    response.send(generateInfo())
+app.get('/info', (request, response, next) => {
+    Person.find({})
+        .then(persons => {
+            console.log("persons in find :", persons)
+            // response.send(generateInfo(persons))
+        })
+        .catch(error => next(error))
 })
 
-app.get('/api/persons/:id', (request, response) => {
-    Person.findById(request.params.id).then(person => {
-        response.json(person)
-    })
+app.get('/api/persons/:id', (request, response, next) => {
+    Person.findById(request.params.id)
+        .then(person => {
+            if (person) {
+                response.json(person)
+            } else {
+                response.status(404).end()
+            }
+        })
+        .catch((error) => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -71,7 +83,7 @@ app.delete('/api/persons/:id', (request, response, next) => {
     
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', async (request, response, next) => {
     const body = request.body
 
     if (body.name === undefined) {
@@ -80,26 +92,53 @@ app.post('/api/persons', (request, response) => {
         })
     }
 
-    // if (Person.find({}).some((person) => person.name === body.name)) {
-    //     return response.status(400).json({
-    //         error: 'name duplicate',
-    //     })
-    // }
-
     if (body.number === undefined) {
         return response.status(400).json({
             error: 'number missing',
         })
     }
 
-    const person = new Person({
-        name: body.name,
-        number: body.number,
-    })
+    try {
+        let person = await Person.findOne({ name: body.name })
 
-    person.save().then(savedPerson => {
+        if (person) {
+            person.number = body.number
+        } else {
+            person = new Person({
+                name: body.name,
+                number: body.number
+            })
+        }
+
+        const savedPerson = await person.save()
         response.json(savedPerson)
-    })
+    } catch (error) {next(error)}
+
+
+    // if (duplicatePerson) {
+    //     app.put('/api/persons/:id', (request, response, next) => {
+    //         const person = {
+    //             name: body.name,
+    //             number: body.number
+    //         }
+
+    //         Person.findByIdAndUpdate(request.params.id, person, {new:true})
+    //             .then(updatePerson => {
+    //                 response.json(updatePerson)
+    //             })
+    //             .catch(error => next(error))
+    //     })
+    // }
+
+    // const person = new Person({
+    //     name: body.name,
+    //     number: body.number,
+    // })
+    
+
+    // person.save().then(savedPerson => {
+    //     response.json(savedPerson)
+    // })
 })
 
 const unknownEndpoint = (request, response) => {
@@ -118,7 +157,7 @@ const errorHandler = (error, request, response, next) => {
 
 app.use(errorHandler)
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
