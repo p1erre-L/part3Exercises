@@ -8,29 +8,34 @@ const Person = require('./models/person')
 app.use(express.json())
 app.use(express.static('dist'))
 
-morgan.token('body', function (req, res) { return JSON.stringify(req.body) })
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
-
+morgan.token('body', function (req, res) {
+    return JSON.stringify(req.body)
+})
+app.use(
+    morgan(
+        ':method :url :status :res[content-length] - :response-time ms :body'
+    )
+)
 
 // let persons = [
-//     { 
+//     {
 //       "id": 1,
-//       "name": "Arto Hellas", 
+//       "name": "Arto Hellas",
 //       "number": "040-123456"
 //     },
-//     { 
+//     {
 //       "id": 2,
-//       "name": "Ada Lovelace", 
+//       "name": "Ada Lovelace",
 //       "number": "39-44-5323523"
 //     },
-//     { 
+//     {
 //       "id": 3,
-//       "name": "Dan Abramov", 
+//       "name": "Dan Abramov",
 //       "number": "12-43-234345"
 //     },
-//     { 
+//     {
 //       "id": 4,
-//       "name": "Mary Poppendieck", 
+//       "name": "Mary Poppendieck",
 //       "number": "39-23-6423122"
 //     }
 // ]
@@ -39,32 +44,43 @@ app.get('/', (request, response) => {
     response.send('<h1>Hello World!</h1>')
 })
 
-app.get('/api/persons', (request, response) => {
-    Person.find({}).then((persons) => {
-        response.json(persons)
-    })
+app.get('/api/persons', (request, response, next) => {
+    Person.find({})
+        .then((persons) => {
+            response.json(persons)
+        })
+        .catch((error) => next(error))
 })
 
-
 const generateInfo = (persons) => {
-    console.log("persons in generateinfo :", persons)
-    const infoPeople = "Phonebook has info for " + persons.length.toString() + " people"
-    const infoTime = Date(Date.now());
-    return "<p>" + infoPeople + "</p><p>" + infoTime + "</p>"
+    console.log('persons in generateinfo :', persons)
+    const infoPeople =
+        'Phonebook has info for ' + persons.length.toString() + ' people'
+    const infoTime = Date(Date.now())
+    return '<p>' + infoPeople + '</p><p>' + infoTime + '</p>'
 }
 
 app.get('/info', (request, response, next) => {
     Person.find({})
-        .then(persons => {
-            console.log("persons in find :", persons)
-            // response.send(generateInfo(persons))
+        .then((persons) => {
+            response.json(persons)
         })
-        .catch(error => next(error))
+        .catch((error) => next(error))
 })
+
+// app.get('/info', (request, response, next) => {
+//     Person.find({})
+//         .then((persons) => {
+//             // console.log('persons in find :', persons)
+//             // response.send(generateInfo(persons))
+//             response.json(persons)
+//         })
+//         .catch((error) => next(error))
+// })
 
 app.get('/api/persons/:id', (request, response, next) => {
     Person.findById(request.params.id)
-        .then(person => {
+        .then((person) => {
             if (person) {
                 response.json(person)
             } else {
@@ -76,11 +92,10 @@ app.get('/api/persons/:id', (request, response, next) => {
 
 app.delete('/api/persons/:id', (request, response, next) => {
     Person.findByIdAndDelete(request.params.id)
-        .then(result => {
+        .then((result) => {
             response.status(204).end()
         })
-        .catch(error => next(error))
-    
+        .catch((error) => next(error))
 })
 
 app.post('/api/persons', async (request, response, next) => {
@@ -106,14 +121,15 @@ app.post('/api/persons', async (request, response, next) => {
         } else {
             person = new Person({
                 name: body.name,
-                number: body.number
+                number: body.number,
             })
         }
 
         const savedPerson = await person.save()
         response.json(savedPerson)
-    } catch (error) {next(error)}
-
+    } catch (error) {
+        next(error)
+    }
 
     // if (duplicatePerson) {
     //     app.put('/api/persons/:id', (request, response, next) => {
@@ -134,7 +150,6 @@ app.post('/api/persons', async (request, response, next) => {
     //     name: body.name,
     //     number: body.number,
     // })
-    
 
     // person.save().then(savedPerson => {
     //     response.json(savedPerson)
