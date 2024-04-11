@@ -53,7 +53,6 @@ app.get('/api/persons', (request, response, next) => {
 })
 
 const generateInfo = (persons) => {
-    console.log('persons in generateinfo :', persons)
     const infoPeople =
         'Phonebook has info for ' + persons.length.toString() + ' people'
     const infoTime = Date(Date.now())
@@ -63,20 +62,10 @@ const generateInfo = (persons) => {
 app.get('/info', (request, response, next) => {
     Person.find({})
         .then((persons) => {
-            response.json(persons)
+            response.send(generateInfo(persons))
         })
         .catch((error) => next(error))
 })
-
-// app.get('/info', (request, response, next) => {
-//     Person.find({})
-//         .then((persons) => {
-//             // console.log('persons in find :', persons)
-//             // response.send(generateInfo(persons))
-//             response.json(persons)
-//         })
-//         .catch((error) => next(error))
-// })
 
 app.get('/api/persons/:id', (request, response, next) => {
     Person.findById(request.params.id)
