@@ -106,8 +106,10 @@ app.post('/api/persons', async (request, response, next) => {
         let person = await Person.findOne({ name: body.name })
 
         if (person) {
+            console.log("Person found")
             person.number = body.number
         } else {
+            console.log("no one with this name found")
             person = new Person({
                 name: body.name,
                 number: body.number,
