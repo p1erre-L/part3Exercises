@@ -5,8 +5,25 @@ const app = express()
 require('dotenv').config()
 const Person = require('./models/person')
 
-app.use(express.json())
 app.use(express.static('dist'))
+
+const requestLogger = (request, response, next) => {
+    console.log('Method:', request.method)
+    console.log('Path:  ', request.path)
+    console.log('Body:  ', request.body)
+    console.log('---')
+    next()
+}
+
+const cors = require('cors')
+
+app.use(cors())
+app.use(express.json())
+app.use(requestLogger)
+
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+}
 
 morgan.token('body', function (req, res) {
     return JSON.stringify(req.body)
@@ -87,7 +104,7 @@ app.delete('/api/persons/:id', (request, response, next) => {
         .catch((error) => next(error))
 })
 
-app.post('/api/persons', async (request, response, next) => {
+app.post('/api/persons', (request, response, next) => {
     const body = request.body
 
     if (body.name === undefined) {
@@ -95,61 +112,46 @@ app.post('/api/persons', async (request, response, next) => {
             error: 'name missing',
         })
     }
-
     if (body.number === undefined) {
         return response.status(400).json({
             error: 'number missing',
         })
     }
 
-    try {
-        let person = await Person.findOne({ name: body.name })
+    Person.findOne({ name: body.name })
+        .then((person) => {
+            if (person) {
+                person.number = body.number
+            } else {
+                person = new Person({
+                    name: body.name,
+                    number: body.number,
+                })
+            }
 
-        if (person) {
-            console.log("Person found")
-            person.number = body.number
-        } else {
-            console.log("no one with this name found")
-            person = new Person({
-                name: body.name,
-                number: body.number,
-            })
-        }
-
-        const savedPerson = await person.save()
-        response.json(savedPerson)
-    } catch (error) {
-        next(error)
-    }
-
-    // if (duplicatePerson) {
-    //     app.put('/api/persons/:id', (request, response, next) => {
-    //         const person = {
-    //             name: body.name,
-    //             number: body.number
-    //         }
-
-    //         Person.findByIdAndUpdate(request.params.id, person, {new:true})
-    //             .then(updatePerson => {
-    //                 response.json(updatePerson)
-    //             })
-    //             .catch(error => next(error))
-    //     })
-    // }
-
-    // const person = new Person({
-    //     name: body.name,
-    //     number: body.number,
-    // })
-
-    // person.save().then(savedPerson => {
-    //     response.json(savedPerson)
-    // })
+            return person.save()
+        })
+        .then((savedPerson) => {
+            response.json(savedPerson)
+        })
+        .catch((error) => next(error))
 })
 
-const unknownEndpoint = (request, response) => {
-    response.status(404).send({ error: 'unknown endpoint' })
-}
+app.put('/api/persons/:id', (request, response, next) => {
+    const {name, number} = request.body
+
+    Person.findByIdAndUpdate(
+        request.params.id, 
+        { name, number },
+        { new: true, runValidators: true, context: 'query' }
+    )
+        .then((updatePerson) => {
+            response.json(updatePerson)
+        })
+        .catch((error) => next(error))
+})
+
+
 
 app.use(unknownEndpoint)
 
@@ -165,7 +167,7 @@ const errorHandler = (error, request, response, next) => {
 
 app.use(errorHandler)
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
